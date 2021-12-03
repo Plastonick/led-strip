@@ -36,13 +36,14 @@ def main_loop(strip, strip_on: bool) -> bool:
     is_triggered = last_motion_trigger > last_motion_stop
 
     # DEBUG
-    is_triggered = False
+    is_triggered = True
 
     now = datetime.now()
     seconds_stopped = (now - last_motion_stop).seconds
 
-    # DEBUG
-    seconds_stopped = 100
+    # # DEBUG
+    # seconds_stopped = 100
+    # strip_on = True
 
     if is_triggered or seconds_stopped < 60:
         occupancy = True
@@ -51,13 +52,20 @@ def main_loop(strip, strip_on: bool) -> bool:
         occupancy = False
         target_brightness = 0
 
+    # the strip is off and there's no occupancy detected, don't do anything
     if strip_on == False and occupancy == False:
         return False
 
     mode = get_mode()
 
-    if mode == "rainbow" and occupancy:
-        rainbow(strip)
+    # if mode == "rainbow" and occupancy:
+    #     rainbow(strip)
+
+    #     return True
+
+    # if mode == "christmas" and occupancy:
+    if True:
+        christmas(strip)
 
         return True
 
@@ -79,6 +87,91 @@ def rainbow(strip):
             strip.setPixelColor(i, wheel((int(i * 256 / strip.numPixels()) + j) & 255))
         strip.show()
         time.sleep(20 / 1000.0)
+
+
+def get_christmas_color():
+    gold = (248, 178, 41)
+    green = (22, 91, 51)
+    red = (245, 37, 40)
+
+    gold_weight = 4
+    green_weight = 1
+    red_weight = 1
+
+    rand = random.randint(1, gold_weight + green_weight + red_weight)
+    if rand <= gold_weight:
+        return gold
+    elif rand <= gold_weight + green_weight:
+        return green
+    else:
+        return red
+
+
+def christmas(strip):
+    off = Color(0, 0, 0)
+
+    # set an initial coloring
+    pixels = list(range(strip.numPixels()))
+    random.shuffle(pixels)
+    for i in pixels:
+        rand = random.randint(0, 3)
+        if rand == 0:
+            c = get_christmas_color()
+            strip.setPixelColorRGB(i, c[0], c[1], c[2])
+        elif rand == 1:
+            strip.setPixelColor(i, off)
+
+    # pixel: current magnitude
+    turning_off = {}
+    turning_on = {}
+    scale = 10
+
+    while True:
+        for i in range(strip.numPixels()):
+            rand = random.randint(0, 300)
+
+            if i in turning_on or i in turning_off:
+                continue
+
+            if rand == 0:
+                c = strip.getPixelColorRGB(i)
+
+                turning_off[i] = [[c.r, c.g, c.b], scale]
+            elif rand == 1:
+                turning_on[i] = [get_christmas_color(), 0]
+
+        complete = []
+        for i in turning_off:
+            c = turning_off[i][0]
+            s = turning_off[i][1] / scale
+
+            strip.setPixelColorRGB(i, int(c[0] * s), int(c[1] * s), int(c[2] * s))
+
+            if turning_off[i][1] == 0:
+                complete.append(i)
+            else:
+                turning_off[i][1] -= 1
+
+        for i in complete:
+            turning_off.pop(i)
+
+        complete = []
+        for i in turning_on:
+            c = turning_on[i][0]
+            s = turning_on[i][1] / scale
+
+            strip.setPixelColorRGB(i, int(c[0] * s), int(c[1] * s), int(c[2] * s))
+
+            if turning_on[i][1] == scale:
+                complete.append(i)
+            else:
+                turning_on[i][1] += 1
+
+        for i in complete:
+            turning_on.pop(i)
+
+        strip.show()
+        time.sleep(20 / 1000)
 
 
 def wheel(pos):
