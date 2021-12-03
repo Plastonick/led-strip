@@ -86,9 +86,9 @@ def rainbow(strip):
 
 
 def get_christmas_color():
-    gold = (248, 178, 41)
-    green = (17, 150, 30)
-    red = (245, 37, 40)
+    gold = (124, 89, 20)
+    green = (9, 75, 15)
+    red = (122, 18, 20)
 
     gold_weight = 4
     green_weight = 1
@@ -109,18 +109,21 @@ def christmas(strip):
     # set an initial coloring
     pixels = list(range(strip.numPixels()))
     random.shuffle(pixels)
+
+    is_on = {}
     for i in pixels:
         rand = random.randint(0, 3)
         if rand == 0:
             c = get_christmas_color()
             strip.setPixelColorRGB(i, c[0], c[1], c[2])
-        elif rand == 1:
+            is_on[i] = True
+        else:
             strip.setPixelColor(i, off)
 
     # pixel: current magnitude
     turning_off = {}
     turning_on = {}
-    scale = 10
+    scale = 30
 
     while get_occupancy() and get_mode() == "christmas":
         for i in range(strip.numPixels()):
@@ -130,10 +133,16 @@ def christmas(strip):
                 continue
 
             if rand == 0:
+                if i not in is_on:
+                    continue
+
                 c = strip.getPixelColorRGB(i)
 
                 turning_off[i] = [[c.r, c.g, c.b], scale]
             elif rand == 1:
+                if i in is_on:
+                    continue
+
                 turning_on[i] = [get_christmas_color(), 0]
 
         complete = []
@@ -145,6 +154,7 @@ def christmas(strip):
 
             if turning_off[i][1] == 0:
                 complete.append(i)
+                del is_on[i]
             else:
                 turning_off[i][1] -= 1
 
@@ -159,6 +169,7 @@ def christmas(strip):
             strip.setPixelColorRGB(i, int(c[0] * s), int(c[1] * s), int(c[2] * s))
 
             if turning_on[i][1] == scale:
+                is_on[i] = True
                 complete.append(i)
             else:
                 turning_on[i][1] += 1
