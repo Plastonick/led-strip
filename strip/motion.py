@@ -29,23 +29,20 @@ def get_mode() -> str:
     return mode
 
 
-def main_loop(strip, strip_on: bool) -> bool:
+def get_occupancy() -> bool:
     last_motion_trigger = get_last_time("kitchenmotionon")
     last_motion_stop = get_last_time("kitchenmotionoff")
 
     is_triggered = last_motion_trigger > last_motion_stop
 
-    # DEBUG
-    is_triggered = True
-
     now = datetime.now()
     seconds_stopped = (now - last_motion_stop).seconds
 
-    # # DEBUG
-    # seconds_stopped = 100
-    # strip_on = True
+    return is_triggered or seconds_stopped < 60
 
-    if is_triggered or seconds_stopped < 60:
+
+def main_loop(strip, strip_on: bool) -> bool:
+    if get_occupancy():
         occupancy = True
         target_brightness = 100
     else:
@@ -58,13 +55,12 @@ def main_loop(strip, strip_on: bool) -> bool:
 
     mode = get_mode()
 
-    # if mode == "rainbow" and occupancy:
-    #     rainbow(strip)
+    if mode == "rainbow" and occupancy:
+        rainbow(strip)
 
-    #     return True
+        return True
 
-    # if mode == "christmas" and occupancy:
-    if True:
+    if mode == "christmas" and occupancy:
         christmas(strip)
 
         return True
@@ -91,18 +87,18 @@ def rainbow(strip):
 
 def get_christmas_color():
     gold = (248, 178, 41)
-    green = (22, 91, 51)
+    # green = (17, 150, 30)
     red = (245, 37, 40)
 
     gold_weight = 4
-    green_weight = 1
+    # green_weight = 1
     red_weight = 1
 
-    rand = random.randint(1, gold_weight + green_weight + red_weight)
+    rand = random.randint(1, gold_weight + red_weight)
     if rand <= gold_weight:
         return gold
-    elif rand <= gold_weight + green_weight:
-        return green
+    # elif rand <= gold_weight + green_weight:
+    #     return green
     else:
         return red
 
@@ -126,7 +122,7 @@ def christmas(strip):
     turning_on = {}
     scale = 10
 
-    while True:
+    while get_occupancy() and get_mode() == "christmas":
         for i in range(strip.numPixels()):
             rand = random.randint(0, 300)
 
