@@ -1,0 +1,21 @@
+version: '3'
+services: 
+    strip:
+        build:
+            context: ./strip
+            dockerfile: ./strip.Dockerfile
+        privileged: true
+        volumes: 
+            - ./strip:/app # for development
+            - ./data:/data:ro
+        restart: unless-stopped
+    flask:
+        build:
+            context: ./flask
+            dockerfile: ./flask.Dockerfile
+        restart: unless-stopped
+        volumes: 
+            - ./flask/app.py:/app.py # for development
+            - ./data:/data
+        ports:
+            - "5000:5000"
