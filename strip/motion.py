@@ -87,18 +87,18 @@ def rainbow(strip):
 
 def get_christmas_color():
     gold = (248, 178, 41)
-    # green = (17, 150, 30)
+    green = (17, 150, 30)
     red = (245, 37, 40)
 
     gold_weight = 4
-    # green_weight = 1
+    green_weight = 1
     red_weight = 1
 
-    rand = random.randint(1, gold_weight + red_weight)
+    rand = random.randint(1, gold_weight + green_weight + red_weight)
     if rand <= gold_weight:
         return gold
-    # elif rand <= gold_weight + green_weight:
-    #     return green
+    elif rand <= gold_weight + green_weight:
+        return green
     else:
         return red
 
