@@ -35,8 +35,14 @@ def main_loop(strip, strip_on: bool) -> bool:
 
     is_triggered = last_motion_trigger > last_motion_stop
 
+    # DEBUG
+    is_triggered = False
+
     now = datetime.now()
     seconds_stopped = (now - last_motion_stop).seconds
+
+    # DEBUG
+    seconds_stopped = 100
 
     if is_triggered or seconds_stopped < 60:
         occupancy = True
