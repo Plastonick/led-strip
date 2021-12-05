@@ -241,51 +241,51 @@ def rain(strip):
 def iterate_board(board, n_pixels):
     # detect and solve collisions
     for i in board:
-        direction = -1 if board[i] == 0 else 1
+        direction = board[i][0]
         next = (i + direction) % n_pixels
         next_next = (i + (direction * 2)) % n_pixels
 
         if next in board:
             # switch direction
-            board[i] = (board[i] + 1) % 2
-            board[next] = (board[next] + 1) % 2
+            board[i][0] = board[i][0] * -1
+            board[next][0] = board[next][0] * -1
 
         if next_next in board:
             # switch direction
-            board[i] = (board[i] + 1) % 2
-            board[next_next] = (board[next_next] + 1) % 2
+            board[i][0] = board[i][0] * -1
+            board[next_next][0] = board[next_next][0] * -1
 
     new_board = {}
     for i in board:
-        val = board[i]
-
-        if val == 0:
-            direction = -1
-        else:
-            direction = 1
-
+        direction = board[i][0]
         go_to = (i + direction) % n_pixels
 
-        new_board[go_to] = val
+        new_board[go_to] = [direction, board[i][1]]
 
     return new_board
 
 
 def game(strip):
-    # wipe all pixels
-    pincer(strip, 0)
 
     n_pixels = strip.numPixels()
     strip_pixels = range(n_pixels)
-    board = {}
 
+    board = {}
     # populate players
-    val = 1
-    for i in strip_pixels:
-        seed = random.randint(0, 30)
-        if seed == 0:
-            board[i] = val
-            val = (val + 1) % 2
+    direction = 1
+    colors = [Color(255, 0, 0), Color(0, 255, 0), Color(0, 0, 255)]
+    c = 0
+
+    shuffled = list(range(strip.numPixels()))
+    random.shuffle(shuffled)
+
+    selected = shuffled[:9]
+    selected.sort()
+
+    for i in selected:
+        board[i] = [direction, colors[c]]
+        direction = -1 * direction
+        c = (c + 1) % 3
 
     while get_occupancy() and get_mode() == "game":
         # clear the board to re-draw
@@ -294,10 +294,7 @@ def game(strip):
 
         # draw game board
         for i in board:
-            if board[i] == 0:
-                strip.setPixelColorRGB(i, 255, 0, 0)
-            elif board[i] == 1:
-                strip.setPixelColorRGB(i, 0, 0, 255)
+            strip.setPixelColor(i, board[i][1])
 
         # iterate board
         # 1s are going left, 2s are going right, the sides wrap
