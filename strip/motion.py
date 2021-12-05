@@ -55,15 +55,27 @@ def main_loop(strip, strip_on: bool) -> bool:
 
     mode = get_mode()
 
-    if mode == "rainbow" and occupancy:
-        rainbow(strip)
+    if occupancy:
+        if mode == "rainbow":
+            rainbow(strip)
 
-        return True
+            return True
+        elif mode == "christmas":
+            christmas(strip)
 
-    if mode == "christmas" and occupancy:
-        christmas(strip)
+            return True
+        elif mode == "flash":
+            flash(strip)
 
-        return True
+            return True
+        elif mode == "rain":
+            rain(strip)
+
+            return True
+        elif mode == "game":
+            game(strip)
+
+            return True
 
     slide_mode = 1
 
@@ -104,10 +116,6 @@ def get_christmas_color():
 
 
 def christmas(strip):
-    # set an initial coloring
-    pixels = list(range(strip.numPixels()))
-    random.shuffle(pixels)
-
     # pixel: bool
     is_on = {}
 
@@ -170,6 +178,134 @@ def christmas(strip):
 
         strip.show()
         time.sleep(20 / 1000)
+
+
+def flash(strip):
+    while get_occupancy() and get_mode() == "flash":
+        for i in range(5):
+
+            for k in range(strip.numPixels()):
+                w1 = 200
+                if (k + i) % 5 == 0:
+                    strip.setPixelColorRGB(k, w1, w1, w1)
+                else:
+                    strip.setPixelColorRGB(k, 0, 0, 0)
+
+            strip.show()
+            time.sleep(100 / 1000)
+
+
+# this one probably needs some TLC to make it look decent
+def rain(strip):
+    # wipe all pixels
+    pincer(strip, 0)
+
+    r = [70, 150, 214]
+
+    drops = {}
+
+    while get_occupancy() and get_mode() == "rain":
+        # always start from a blank slate and re-draw the raindrops
+        for i in range(strip.numPixels()):
+            strip.setPixelColorRGB(i, 0, 0, 0)
+
+        new_drop = random.randint(0, strip.numPixels() - 1)
+
+        if new_drop not in drops:
+            drops[new_drop] = 1
+
+        completed_drops = []
+        for i in drops:
+            magnitude = drops[i]
+            left_pixels = range(i - magnitude - 1, i - magnitude + 1)
+            right_pixels = range(i + magnitude - 1, i + magnitude + 1)
+
+            for j in left_pixels:
+                strip.setPixelColorRGB(j, r[0], r[1], r[2])
+
+            for j in right_pixels:
+                strip.setPixelColorRGB(j, r[0], r[1], r[2])
+
+            if magnitude >= 10:
+                completed_drops.append(i)
+            else:
+                drops[i] += 1
+
+        for i in completed_drops:
+            del drops[i]
+
+        strip.show()
+        time.sleep(150 / 1000)
+
+
+def iterate_board(board, n_pixels):
+    # detect and solve collisions
+    for i in board:
+        direction = -1 if board[i] == 0 else 1
+        next = (i + direction) % n_pixels
+        next_next = (i + (direction * 2)) % n_pixels
+
+        if next in board:
+            # switch direction
+            board[i] = (board[i] + 1) % 2
+            board[next] = (board[next] + 1) % 2
+
+        if next_next in board:
+            # switch direction
+            board[i] = (board[i] + 1) % 2
+            board[next_next] = (board[next_next] + 1) % 2
+
+    new_board = {}
+    for i in board:
+        val = board[i]
+
+        if val == 0:
+            direction = -1
+        else:
+            direction = 1
+
+        go_to = (i + direction) % n_pixels
+
+        new_board[go_to] = val
+
+    return new_board
+
+
+def game(strip):
+    # wipe all pixels
+    pincer(strip, 0)
+
+    n_pixels = strip.numPixels()
+    strip_pixels = range(n_pixels)
+    board = {}
+
+    # populate players
+    val = 1
+    for i in strip_pixels:
+        seed = random.randint(0, 30)
+        if seed == 0:
+            board[i] = val
+            val = (val + 1) % 2
+
+    while get_occupancy() and get_mode() == "game":
+        # clear the board to re-draw
+        for i in strip_pixels:
+            strip.setPixelColorRGB(i, 0, 0, 0)
+
+        # draw game board
+        for i in board:
+            if board[i] == 0:
+                strip.setPixelColorRGB(i, 255, 0, 0)
+            elif board[i] == 1:
+                strip.setPixelColorRGB(i, 0, 0, 255)
+
+        # iterate board
+        # 1s are going left, 2s are going right, the sides wrap
+        board = iterate_board(board, n_pixels)
+
+        # display new board, then wait for next turn
+        strip.show()
+        time.sleep(30 / 1000)
 
 
 def wheel(pos):
