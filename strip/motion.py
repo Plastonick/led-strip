@@ -104,21 +104,12 @@ def get_christmas_color():
 
 
 def christmas(strip):
-    off = Color(0, 0, 0)
-
     # set an initial coloring
     pixels = list(range(strip.numPixels()))
     random.shuffle(pixels)
 
+    # pixel: bool
     is_on = {}
-    for i in pixels:
-        rand = random.randint(0, 3)
-        if rand == 0:
-            c = get_christmas_color()
-            strip.setPixelColorRGB(i, c[0], c[1], c[2])
-            is_on[i] = True
-        else:
-            strip.setPixelColor(i, off)
 
     # pixel: current magnitude
     turning_off = {}
